@@ -1,0 +1,22 @@
+pip install requests
+pip install SpeechRecognition
+pip install pyttsx3
+pip install qiskit
+pip install pyaudio  # This may require additional steps depending on your OS
+
+
+
+  if not working installit in venv
+
+  # Create and activate a virtual environment
+python -m venv myenv
+# Activate the environment
+source myenv/bin/activate  # On macOS/Linux
+# myenv\Scripts\activate  # On Windows
+
+# Install required packages
+pip install requests
+pip install SpeechRecognition
+pip install pyttsx3
+pip install qiskit
+pip install pyaudio
