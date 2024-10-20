@@ -1,0 +1,128 @@
+#created by gomathyesvarv enjoy this code its completly free and open sourced
+
+import requests
+import speech_recognition as sr
+import pyttsx3
+import os
+import webbrowser
+from qiskit import QuantumCircuit, Aer, execute
+
+# Initialize Claude API
+CLAUDE_API_KEY = "YOUR_CLAUDE_API_KEY"  # Replace with your Claude API key
+
+# Initialize Text-to-Speech
+engine = pyttsx3.init()
+
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def listen():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        audio = recognizer.listen(source)
+        try:
+            command = recognizer.recognize_google(audio)
+            print(f"You said: {command}")
+            return command
+        except sr.UnknownValueError:
+            speak("Sorry, I did not understand that.")
+            return None
+        except sr.RequestError:
+            speak("Could not request results; check your network connection.")
+            return None
+
+def open_browser(query):
+    webbrowser.open(f"https://www.google.com/search?q={query}")
+
+def send_email(recipient, subject, body):
+    # This is a placeholder function
+    print(f"Sending email to {recipient} with subject '{subject}' and body '{body}'")
+
+def get_claude_response(command):
+    try:
+        response = requests.post(
+            "https://api.anthropic.com/v1/complete",
+            headers={
+                "Authorization": f"Bearer {CLAUDE_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "prompt": command,
+                "model": "claude-v1",
+                "max_tokens": 150
+            }
+        )
+        response.raise_for_status()
+        answer = response.json().get('completion', 'Sorry, I could not process that.')
+        return answer
+    except Exception as e:
+        print(f"Error calling Claude API: {e}")
+        return "Sorry, I encountered an error."
+
+def create_quantum_circuit():
+    # Create a Quantum Circuit with 2 qubits
+    circuit = QuantumCircuit(2, 2)
+
+    # Apply a Hadamard gate to the first qubit
+    circuit.h(0)
+
+    # Apply a CNOT gate (controlled NOT) with the first qubit as control and second as target
+    circuit.cx(0, 1)
+
+    # Measure the qubits into the classical register
+    circuit.measure([0, 1], [0, 1])
+
+    return circuit
+
+def run_quantum_circuit(circuit):
+    # Use the Aer's qasm_simulator
+    simulator = Aer.get_backend('qasm_simulator')
+
+    # Execute the circuit on the qasm simulator
+    job = execute(circuit, simulator, shots=1024)
+    result = job.result()
+
+    # Get the counts
+    counts = result.get_counts(circuit)
+    print("Measurement results:", counts)
+    
+    return counts
+
+def perform_command(command):
+    if "search" in command:
+        query = command.replace("search", "").strip()
+        open_browser(query)
+        speak(f"Searching for {query}")
+    elif "email" in command:
+        parts = command.split(" ")
+        recipient = parts[1] + " " + parts[2]  # Simplified for demo
+        subject = parts[4]  # Simplified for demo
+        body = " ".join(parts[5:])  # Simplified for demo
+        send_email(recipient, subject, body)
+        speak(f"Email sent to {recipient}")
+    elif "shutdown" in command:
+        os.system("shutdown /s /t 1")
+    elif "restart" in command:
+        os.system("shutdown /r /t 1")
+    elif "sleep" in command:
+        os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+    elif "quantum" in command:
+        speak("Executing quantum circuit.")
+        circuit = create_quantum_circuit()
+        counts = run_quantum_circuit(circuit)
+        speak(f"The quantum measurement results are: {counts}")
+    else:
+        answer = get_claude_response(command)
+        speak(answer)
+
+def main():
+    speak("Hello, I am Alfred. How can I assist you today?")
+    while True:
+        command = listen()
+        if command:
+            perform_command(command.lower())
+
+if __name__ == "__main__":
+    main()
